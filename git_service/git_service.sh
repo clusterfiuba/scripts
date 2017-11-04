@@ -34,13 +34,13 @@ while true; do
    exec_command "cd $WORKING_DIRECTORY/quipu"
    exec_command "git fetch --all"
    exec_command "git reset --hard origin/master"
-   GIT_IP=$(cat $WORKING_DIRECTORY/quipu/README.md)
+   GIT_IP=$(cat README.md | grep "IP:" | cut -f4 -d" ")
    CLUSTER_IP=$(ifconfig | grep inet | sed "3q;d" | sed -e 's/^[[:space:]]*//' | cut -f2 -d" ")
    echo "IP del cluster: $CLUSTER_IP"
    echo "IP de GITHUB: $GIT_IP"
    if [ "$CLUSTER_IP" != "$GIT_IP" ]; then
 	echo "cambio la IP. Actualizando el repositorio."
-        exec_command "echo $CLUSTER_IP > README.md"
+        exec_command "sed -i \"s/\(^.*\)\(IP:\ .*\ \)\(.*$\)/\1IP:\ $CLUSTER_IP\ \3/g\" README.md"
         exec_command "git add *"
         exec_command "git commit -m \"Change IP\""
         exec_command "git push $GITHUB_URI --all"
