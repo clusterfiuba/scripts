@@ -1,0 +1,17 @@
+dn: dc=quipu,dc=local
+dc: quipu
+objectClass: top
+objectClass: domain
+
+dn: cn=ldapadm ,dc=quipu,dc=local
+objectClass: organizationalRole
+cn: ldapadm
+description: LDAP Manager
+
+dn: ou=People,dc=quipu,dc=local
+objectClass: organizationalUnit
+ou: People
+
+dn: ou=Group,dc=quipu,dc=local
+objectClass: organizationalUnit
+ou: Group
