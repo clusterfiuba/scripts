@@ -21,7 +21,7 @@ function exec_command() {
         eval $1
         if [ $? -ne 0 ]; then
                 echoError "Error al ejecutar el comando $1 paso $STEP"
-                echo $STEP > $STEPFILE
+                echo "$STEP" > $STEPFILE
                 exit 1
         fi
         STEP=$((STEP+1))
