@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Import common functions
+. ../common/common_functions.sh
+
 #Global vars
 
 export STEP=0
@@ -7,46 +10,13 @@ export INITSTEP=0
 export STEPFILE=step.txt
 
 
-# Auxiliar functions
-#
-#
-function echoError () {
-	echo $'\e[1;31m'"${1}"$'\e[0m'
-}
-
-function echoSuccess () {
-	echo $'\e[1;32m'"${1}"$'\e[0m'
-}
-
-function echoBold () {
-	echo $'\e[1m'"${1}"$'\e[0m'
-}
-
-function exec_command() {
-	if [ $STEP -le $INITSTEP ] then
-		return 
-	fi
-	echo "Ejecutando comando $1"
-	eval $1
-	if [ $? -ne 0 ]; then
-		echoError "Error al ejecutar el comando $1 paso $STEP"
-		echo $STEP > $STEPFILE
-		exit 1
-	fi
-	STEP=$((STEP+1))
-	echoSuccess "OK"
-}
-
 # Main program
 
-if [-e $STEPFILE ]; then 
-	INITSTEP=$(cat $STEPFILE)
-else
-	echo $INITSTEP > $STEPFILE
-fi
+[ -f $STEPFILE ] && INITSTEP=$(cat $STEPFILE)
 
 
 # Main
+#exec_command "echo probando un paso antes del error"
 echoBold "Instalando Munge"
 echo ""
 echo "Creando usuarios ..."
@@ -59,9 +29,9 @@ exec_command "useradd -m -c \"SLURM workload manager\" -d /var/lib/slurm -u $SLU
 echo ""
 echo "Instalando paquetes ..."
 exec_command "yum install epel-release munge munge-libs munge-devel -y"
-exec_command "cp munge.key /etc/munge"
-exec_command "chown -R munge: /etc/munge/ /var/log/munge/"
-exec_command "chmod 0777 /etc/munge /var/log/munge"
+exec_command "cp ../slurm/munge.key /etc/munge/munge.key"
+exec_command "chown munge: /etc/munge/munge.key"
+exec_command "chmod 0400 /etc/munge/munge.key"
 echo ""
 echo "Iniciando Munge ..."
 exec_command "systemctl enable munge"
@@ -73,20 +43,22 @@ echoBold "Sincronizando la fecha y hora del nodo del cnode con el admnode"
 exec_command "yum install ntp -y"
 exec_command "unlink /etc/localtime"
 exec_command "ln -s /usr/share/zoneinfo/America/Buenos_Aires /etc/localtime"
-exec_command "cp ntp/ntp.conf /etc/ntp.conf"
+exec_command "cp ../ntp/ntp.conf.server /etc/ntp.conf"
 exec_command "systemctl enable ntpd"
 exec_command "systemctl start ntpd"
 echo ""
-echoBold "Instalando Surm"
+echoBold "Instalando Slurm"
 echo ""
 echo "Instalando paquetes ..."
 exec_command "yum install openssl openssl-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel man2html libibmad libibumad perl-ExtUtils-MakeMaker gcc -y"
-exec_command "yum --nogpgcheck localinstall slurm-17.02.7-1.el7.centos.x86_64.rpm slurm-contribs-17.02.7-1.el7.centos.x86_64.rpm slurm-devel-17.02.7-1.el7.centos.x86_64.rpm slurm-munge-17.02.7-1.el7.centos.x86_64.rpm slurm-openlava-17.02.7-1.el7.centos.x86_64.rpm slurm-pam_slurm-17.02.7-1.el7.centos.x86_64.rpm slurm-perlapi-17.02.7-1.el7.centos.x86_64.rpm slurm-plugins-17.02.7-1.el7.centos.x86_64.rpm slurm-slurmdbd-17.02.7-1.el7.centos.x86_64.rpm slurm-sql-17.02.7-1.el7.centos.x86_64.rpm slurm-torque-17.02.7-1.el7.centos.x86_64.rpm -y"
+#exec_command "cd ../slurm"
+exec_command "yum --nogpgcheck localinstall ../slurm/*.rpm -y"
+#exec_command "yum --nogpgcheck localinstall slurm-17.02.7-1.el7.centos.x86_64.rpm slurm-contribs-17.02.7-1.el7.centos.x86_64.rpm slurm-devel-17.02.7-1.el7.centos.x86_64.rpm slurm-munge-17.02.7-1.el7.centos.x86_64.rpm slurm-openlava-17.02.7-1.el7.centos.x86_64.rpm slurm-pam_slurm-17.02.7-1.el7.centos.x86_64.rpm slurm-perlapi-17.02.7-1.el7.centos.x86_64.rpm slurm-plugins-17.02.7-1.el7.centos.x86_64.rpm slurm-slurmdbd-17.02.7-1.el7.centos.x86_64.rpm slurm-sql-17.02.7-1.el7.centos.x86_64.rpm slurm-torque-17.02.7-1.el7.centos.x86_64.rpm -y"
+#exec_command "cd ../admnode"
 echo ""
 echo "Configurando Slurm ..."
-exec_command "cp slurm.conf /etc/slurm/"
-exec_command "cgroup.conf /etc/slurm/"
-
+exec_command "cp ../slurm/slurm.conf /etc/slurm/"
+exec_command "cp ../slurm/cgroup.conf /etc/slurm/"
 
 exec_command "mkdir /var/spool/slurmctld"
 exec_command "chown slurm: /var/spool/slurmctld"
@@ -108,8 +80,8 @@ echo "Instalando squid"
 exec_command "yum -y install squid"
 echo ""
 echo "configurando proxy"
-exec_command "cp squid/squid.conf /etc/squid/squid.conf"
-exec_command "echo "
+#exec_command "cp squid/squid.conf /etc/squid/squid.conf"
+#exec_command "echo "
 exec_command "systemctl enable squid"
 exec_command "systemctl start squid"
 exec_command "echo \"http_proxy=\"http://proxy.fi.uba.ar:8080/\"\""
@@ -121,15 +93,17 @@ echo "Instalando ldap server"
 exec_command "yum -y install openldap compat-openldap openldap-clients openldap-servers openldap-servers-sql openldap-devel"
 exec_command "systemctl start slapd.service"
 exec_command "systemctl enable slapd.service"
-exec_command "netstat -antup | grep -i 389"
-exec_command "yum install net-tools.x86_64"
+#exec_command "netstat -antup | grep -i 389"
+exec_command "yum install net-tools.x86_64 -y"
 exec_command "netstat -antup | grep -i 389"
 exec_command "LDAPPWD=`slappasswd -s Alfa1234 -h {SSHA}`"
-exec_command "sed -i -e \"s/\(olcRootPW:\)/\1$LDAPPWD/\" db.ldif"
+#exec_command "sed -i \"s-\(proxy=\)\(.*\)-\1$CLUSTER_PROXY-g\" $YUM_CONF_FILE"
+#exec_command "sed -i \"s-\(olcRootPW:\)-\1$LDAPPWD-g\" db.ldif"
+exec_command "sed -i -e \"s/\(olcRootPW:\)\(\.+\)/\1$LDAPPWD/\" db.ldif"
 exec_command "ldapmodify -Y EXTERNAL  -H ldapi:/// -f db.ldif"
 exec_command "ldapmodify -Y EXTERNAL  -H ldapi:/// -f monitor.ldif"
 #exec_command "openssl req -new -x509 -nodes -out /etc/openldap/certs/quipuldapcert.pem -keyout /etc/openldap/certs/quipuldapkey.pem -days 365"
-exec_command "cp certs/* /etc/openldap/certs/"
+exec_command "cp ../certs/* /etc/openldap/certs/"
 exec_command "chown -R ldap:ldap /etc/openldap/certs/*.pem"
 exec_command "ldapmodify -Y EXTERNAL -H ldapi:/// -f certs.ldif"
 exec_command "slaptest -u"
@@ -149,18 +123,18 @@ exec_command "systemctl restart nslcd"
 echo ""
 
 echo "Instalando ganglia"
-exec_command "cd ../ganglia"
-exec_command "yum install *.rpm -y"
-#cd /etc/ganglia/
-#sed -i -e \"s/\(data_source \)\(\"cluster\".*\)/\1\"quipu\" 1 admnode/\" /etc/ganglia/gmetad
-exec_command "cp gmetad.conf /etc/ganglia/gmetad.conf"
+#exec_command "cd ../ganglia"
+exec_command "yum install freetype-devel rpm-build php httpd libpng-devel libart_lgpl-devel python-devel pcre-devel autoconf automake libtool expat-devel rrdtool-devel apr-devel gcc-c++ make pkgconfig -y"
+exec"yum install libconfuse -y"
+exec_command "yum install ../ganglia/*.rpm -y"
+exec_command "cp ../ganglia/gmetad.conf /etc/ganglia/"
 #vim gmetad.conf
 #vim /etc/ganglia/gmond.conf
-exec_command "cp gmond.conf /etc/ganglia/gmond.conf"
+exec_command "cp ../ganglia/gmond.conf /etc/ganglia/"
 #wget http://downloads.sourceforge.net/project/ganglia/ganglia%20monitoring%20core/3.1.1%20%28Wien%29/ganglia-web-3.1.1-1.noarch.rpm -O ganglia-web-3.1.1-1.noarach.rpm
-exec_command "cd ../ganglia-web"
-exec_command "yum install - ganglia-web-3.1.1-1.noarach.rpm"
-exec_command "sed -i -e \"s/\(SELINUX=\)/\1disabled/\" /etc/sysconfig/selinux"
+#exec_command "cd ../ganglia-web"
+exec_command "yum install -y ../ganglia-web/ganglia-web-3.1.1-1.noarach.rpm"
+exec_command "sed -i -e \"s/\(SELINUX=\)\(enforcing\)/\1disabled/\" /etc/sysconfig/selinux"
 #reboot
 exec_command "systemctl enable httpd"
 exec_command "systemctl enable gmetad"
@@ -173,24 +147,36 @@ echo "Instalando SlurmWeb"
 exec_command "yum install -y mod_wsgi httpd-devel python-ldap python-redis dejavu-sans-mono-fonts clustershell python-flask Cython npm"
 exec_command "git clone -b 17.02.0 https://github.com/PySlurm/pyslurm.git && cd pyslurm && python setup.py build && python setup.py install"
 exec_command "git clone https://github.com/clusterfiuba/slurm-web.git"
-exec_command "cd ../slurm-web"
-exec_command "tar -xvzf slurm-web-release.tgz && cd slurm-web-release"
-exec_command "cp -fR  usr/share/slurm-web /usr/share && chmod 755 -R /usr/share/slurm-web"
-exec_command "cp -fR  usr/share/slurm-web /usr/share && chmod 755 -R /usr/share/slurm-web"
-exec_command "cp -fR  javascript /usr/share && chmod 755 -R /usr/share/javascript"
-exec_command "cp -fR etc/slurm-web /etc && chmod 755 -R /etc/slurm-web"
-exec_command "cp -fR etc/httpd/conf.d/* /etc/httpd/conf.d/ && chmod 755 -R /etc/httpd/conf.d/*"
+exec_command "cd slurm-web"
+exec_command "tar -xvzf slurm-web-release.tgz"
+exec_command "cd release"
+exec_command "cp -fR  usr/share/slurm-web /usr/share"
+exec_command "chmod 755 -R /usr/share/slurm-web"
+exec_command "cp -fR  usr/share/slurm-web /usr/share"
+exec_command "chmod 755 -R /usr/share/slurm-web"
+exec_command "cp -fR  javascript /usr/share"
+exec_command "chmod 755 -R /usr/share/javascript"
+exec_command "cp -fR etc/slurm-web /etc"
+exec_command "chmod 755 -R /etc/slurm-web"
+exec_command "cp -fR etc/httpd/conf.d/* /etc/httpd/conf.d/"
+exec_command "chmod 755 -R /etc/httpd/conf.d/*"
 exec_command "systemctl restart httpd"
 echo ""
 echo "Instalando git_service"
-exec_command "git clone https://github.com/clusterfiuba/scripts.git"
-exec_command "cd scripts/git_service && ./install_git_service.sh -d /root"
-exec_command "echo \"PULL_TIME=3600\" > /etc/conf.d/git_service"
-exec_command "echo \"GITHUB_URI=https://github.com/clusterfiuba/quipu.git\" >> /etc/conf.d/git_service"
-exec_command "echo \"GITHUB_USER=clusterfiuba\" >> /etc/conf.d/git_service"
-exec_command "echo \"GITHUB_PASSWORD=Alfa1234\" >> /etc/conf.d/git_service"
-exec_command "echo \"WORKING_DIRECTORY=/root/quipu\" >> /etc/conf.d/git_service"
-exec_command "echo \"USER_HOME=/root\" >> /etc/conf.d/git_service"
-exec_command "systemctl enable git_service"
-exec_command "systemctl start git_service"
+#exec_command "git clone https://github.com/clusterfiuba/scripts.git"
+#exec_command "cd scripts/git_service && ./install_git_service.sh -d /root"
+#exec_command "echo \"PULL_TIME=3600\" > /etc/conf.d/git_service"
+#exec_command "echo \"GITHUB_URI=https://github.com/clusterfiuba/quipu.git\" >> /etc/conf.d/git_service"
+#exec_command "echo \"GITHUB_USER=clusterfiuba\" >> /etc/conf.d/git_service"
+#exec_command "echo \"GITHUB_PASSWORD=Alfa1234\" >> /etc/conf.d/git_service"
+#exec_command "echo \"WORKING_DIRECTORY=/root/quipu\" >> /etc/conf.d/git_service"
+#exec_command "echo \"USER_HOME=/root\" >> /etc/conf.d/git_service"
+#exec_command "systemctl enable git_service"
+#exec_command "systemctl start git_service"
+echo ""
+echo "Instalando nfs server"
+exec_command "yum install nfs-utils -y"
+exec_command "mkdir /scratch"
+exec_command "cp nfs/exports /etc/exports"
+exec_command "exportfs -a"
 echo ""
