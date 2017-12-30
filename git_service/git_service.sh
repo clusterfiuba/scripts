@@ -31,6 +31,7 @@ git config --global user.name "clusterfiuba"
 GITHUB_URI=$(echo $GITHUB_URI | sed 's/github/$GITHUB_USER:$GITHUB_PASSWORD@github/g')
 while true; do
    echo "Iniciando una nueva verificacion de IP"
+   sleep $PULL_TIME
    exec_command "cd $WORKING_DIRECTORY/quipu"
    exec_command "git fetch --all"
    exec_command "git reset --hard origin/master"
@@ -48,5 +49,4 @@ while true; do
     else
         echo "La IP no ha cambiado"
     fi
-    sleep $PULL_TIME
 done
