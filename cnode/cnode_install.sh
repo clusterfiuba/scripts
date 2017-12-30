@@ -119,8 +119,8 @@ echo ""
 
 # PROGRAMAS AUXILIARES
 echoBold "Instalando programas auxiliares"
-#exec_command "sed -i \"s-\(proxy=\)\(.*\)-\1$CLUSTER_PROXY-g\" $YUM_CONF_FILE"
-#exec_command "yum update -y"
+exec_command "sed -i \"s-\(proxy=\)\(.*\)-\1$CLUSTER_PROXY-g\" $YUM_CONF_FILE"
+exec_command "yum update -y"
 exec_command "yum groupinstall \"Development Tools\" -y"
 exec_command "yum groupinstall \"Compatibility Libraries\" -y"
 exec_command "yum install epel-release -y"
