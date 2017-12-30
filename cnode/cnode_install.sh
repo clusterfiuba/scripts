@@ -209,7 +209,7 @@ echoSuccess "Munge instalado exitosamente"
 echo ""
 
 # SLURM
-echoBold "Instalando Surm"
+echoBold "Instalando Slurm"
 echo ""
 echo "Instalando paquetes ..."
 exec_command "yum install openssl openssl-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel man2html libibmad libibumad perl-ExtUtils-MakeMaker gcc -y"
@@ -224,7 +224,13 @@ exec_command "chown slurm: /var/spool/slurmd"
 exec_command "chmod 755 /var/spool/slurmd"
 exec_command "touch /var/log/slurmd.log"
 exec_command "chown slurm: /var/log/slurmd.log"
-exec_command "echo \"NodeName=$NODE_NAME NodeAddr=$IP_ADDRESS CPUs=1 State=UNKNOWN\" >> /etc/slurm/slurm.conf"
+grep "^NodeName=$NODE_NAME " /etc/slurm/slurm.conf 1 > /dev/null 2 > &1
+if [ $? -ne 0 ]; then
+        # No existe el nodo
+        exec_command "echo \"NodeName=$NODE_NAME NodeAddr=$IP_ADDRESS CPUs=1 State=UNKNOWN\" >> /etc/slurm/slurm.conf"
+        NODE_NUMBER=$(echo $NODE_NAME | sed 's/cnode//g')
+        sed -i "s/\(^PartitionName.*1-\)\(.*\)\(\].*$\)/\1$NODE_NUMBER\3/g" /etc/slurm/slurm.conf
+fi
 echo ""
 echo "Chequeando que la configuracion de Slurm sea correcta ..."
 exec_command "slurmd -C"
