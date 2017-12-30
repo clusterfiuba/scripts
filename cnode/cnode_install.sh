@@ -114,6 +114,7 @@ echo ""
 echoBold "Realizando el intercambio de claves RSA"
 exec_command "ssh-keygen"
 exec_command "ssh-copy-id root@$ADMNODE_NAME"
+ssh admnode "echo $IP_ADDRESS $NODE_NAME >> /etc/hosts"
 echoSuccess "Intercambio de claves realizado exitosamente"
 echo ""
 
