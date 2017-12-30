@@ -141,6 +141,12 @@ exec_command "pip install scipy"
 echoSuccess "Programas auxiliares instalados exitosamente"
 echo ""
 
+# SELINUX
+echoBold "Deshabilitando SELINUX"
+exec_command "sed -i 's/^SELINUX=.*$/SELINUX=disabled/g' /etc/sysconfig/selinux"
+echoSuccess "SELINUX deshabilitado exitosamente"
+echo ""
+
 # NTP
 echoBold "Instalando NTP"
 exec_command "yum install ntp -y"
