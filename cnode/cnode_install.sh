@@ -157,6 +157,7 @@ exec_command "sed -i '/^server .*/d' /etc/ntp.conf"
 exec_command "echo \"server $ADMNODE_IP prefer\" >> /etc/ntp.conf"
 exec_command "systemctl enable ntpd"
 exec_command "systemctl start ntpd"
+exec_command "ntpdate admnode"
 echoSuccess "NTP instalado exitosamente"
 echo ""
 
