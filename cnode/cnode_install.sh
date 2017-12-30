@@ -224,7 +224,7 @@ exec_command "chown slurm: /var/spool/slurmd"
 exec_command "chmod 755 /var/spool/slurmd"
 exec_command "touch /var/log/slurmd.log"
 exec_command "chown slurm: /var/log/slurmd.log"
-grep "^NodeName=$NODE_NAME " /etc/slurm/slurm.conf 1 > /dev/null 2 > &1
+grep "^NodeName=$NODE_NAME " /etc/slurm/slurm.conf 1 > /dev/null 2 >&1
 if [ $? -ne 0 ]; then
         # No existe el nodo
         exec_command "echo \"NodeName=$NODE_NAME NodeAddr=$IP_ADDRESS CPUs=1 State=UNKNOWN\" >> /etc/slurm/slurm.conf"
