@@ -173,6 +173,7 @@ echoBold "Instalando NFS y configurando SCRATCH"
 exec_command "yum install nfs-utils -y"
 exec_command "mkdir -p /scratch"
 exec_command "mount $ADMNODE_NAME:/scratch /scratch"
+exec_command "echo $ADMNODE_NAME:/scratch /scratch		nfs	defaults	0 0 >> /etc/fstab"
 echoSuccess "NFS instalado exitosamente"
 echo ""
 
